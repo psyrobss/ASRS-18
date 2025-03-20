@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste de TDAH (ASRS-18)</title>
+
+    <!-- Google Fonts & Materialize CSS -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;600&display=swap">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+
+    <style>
+        :root {
+            --primary: #6A5ACD;
+            --secondary: #FF8A65;
+            --light-bg: #f8f7fc;
+            --dark-text: #333;
+        }
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: var(--light-bg);
+            color: var(--dark-text);
+        }
+        .header {
+            background: linear-gradient(135deg, var(--primary), #9370DB, #8A2BE2);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 0 0 20px 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        .question {
+            padding: 15px 0;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        .question:last-child {
+            border-bottom: none;
+        }
+        .btn-calculate {
+            background: var(--primary);
+            width: 100%;
+            margin-top: 20px;
+        }
+        .result-card {
+            display: none;
+            margin-top: 30px;
+            text-align: center;
+            padding: 20px;
+            border-radius: 12px;
+            background: white;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <h1>Teste de TDAH (ASRS-18)</h1>
+        <p>Responda com base nos últimos 6 meses</p>
+    </div>
+
+    <div class="container">
+        <h5>Parte A: Desatenção</h5>
+        <div id="parteA"></div>
+
+        <h5>Parte B: Hiperatividade</h5>
+        <div id="parteB"></div>
+
+        <button class="btn btn-calculate" onclick="calcularResultado()">Ver Resultado</button>
+
+        <div id="resultado" class="result-card">
+            <h4>Seu Resultado</h4>
+            <p id="resultado-texto"></p>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            M.AutoInit();
+            gerarPerguntas();
+        });
+
+        const perguntas = {
+            A: [
+                "Com que frequência você comete erros por falta de atenção?",
+                "Com que frequência você tem dificuldade para manter a atenção em tarefas repetitivas?",
+                "Com que frequência você tem dificuldade para escutar quando falam diretamente com você?",
+                "Com que frequência você deixa tarefas pela metade?",
+                "Com que frequência você tem dificuldade para organizar atividades?",
+                "Com que frequência você evita ou adia tarefas que exigem esforço mental?",
+                "Com que frequência você perde objetos importantes?",
+                "Com que frequência você se distrai com estímulos externos?",
+                "Com que frequência você esquece compromissos ou obrigações?"
+            ],
+            B: [
+                "Com que frequência você se mexe ou balança as mãos ou os pés quando está sentado(a)?",
+                "Com que frequência você se levanta quando deveria permanecer sentado(a)?",
+                "Com que frequência você se sente inquieto(a) ou agitado(a)?",
+                "Com que frequência você tem dificuldade para relaxar?",
+                "Com que frequência você se sente impulsionado(a) a estar sempre em movimento?",
+                "Com que frequência você fala excessivamente?",
+                "Com que frequência você interrompe os outros ao falar?",
+                "Com que frequência você tem dificuldade para esperar sua vez?",
+                "Com que frequência você interrompe atividades de outras pessoas?"
+            ]
+        };
+
+        const opcoes = ["Nunca", "Raramente", "Às vezes", "Frequentemente", "Muito frequentemente"];
+
+        function gerarPerguntas() {
+            ["A", "B"].forEach((parte) => {
+                let container = document.getElementById(`parte${parte}`);
+                perguntas[parte].forEach((texto, index) => {
+                    let div = document.createElement("div");
+                    div.classList.add("question");
+                    div.innerHTML = `<p>${index + 1}. ${texto}</p>` +
+                        opcoes.map((op, i) => `
+                            <label>
+                                <input name="parte${parte}-${index}" type="radio" value="${i}" />
+                                <span>${op}</span>
+                            </label>
+                        `).join("");
+                    container.appendChild(div);
+                });
+            });
+        }
+
+        function calcularResultado() {
+            let totalA = calcularPontuacao("A");
+            let totalB = calcularPontuacao("B");
+            let resultado = document.getElementById("resultado");
+            let textoResultado = document.getElementById("resultado-texto");
+
+            if (totalA === null || totalB === null) {
+                M.toast({ html: "Responda todas as perguntas!", classes: "red lighten-1 rounded" });
+                return;
+            }
+
+            let analise = analisarResultados(totalA, totalB);
+            textoResultado.innerHTML = analise;
+            resultado.style.display = "block";
+            resultado.scrollIntoView({ behavior: "smooth" });
+        }
+
+        function calcularPontuacao(parte) {
+            let total = 0;
+            let respondidas = true;
+
+            perguntas[parte].forEach((_, index) => {
+                let selecionado = document.querySelector(`input[name="parte${parte}-${index}"]:checked`);
+                if (selecionado) {
+                    total += parseInt(selecionado.value);
+                } else {
+                    respondidas = false;
+                }
+            });
+
+            return respondidas ? total : null;
+        }
+
+        function analisarResultados(totalA, totalB) {
+            let resultadoTexto = `Desatenção: ${totalA}/36 <br> Hiperatividade: ${totalB}/36 <br>`;
+
+            let risco = (totalA + totalB) / 72;
+            if (risco >= 0.7) {
+                resultadoTexto += `<strong>Alto risco de TDAH. Consulte um especialista.</strong>`;
+            } else if (risco >= 0.4) {
+                resultadoTexto += `<strong>Risco moderado. Atenção aos sintomas.</strong>`;
+            } else {
+                resultadoTexto += `<strong>Baixo risco. Seus sintomas são mínimos.</strong>`;
+            }
+
+            return resultadoTexto;
+        }
+    </script>
+</body>
+</html>
